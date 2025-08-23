@@ -65,7 +65,7 @@ Please provide:
 
 
 Format the response in a clear, structured report. Do NOT yap to much or be verbose or to little.
-
+PSA: Provide quotes & messsages when possible which are notable. It helps the user understand what you mean way better.
 Below are a list of groups, use these as context when finding out if they are in groups according to chat logs.:
 
 ## Groups from 2b2t Wiki
