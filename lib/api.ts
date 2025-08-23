@@ -46,7 +46,7 @@ export async function getPlayerStats(playerName: string): Promise<PlayerStats | 
   }
 }
 
-export async function getPlayerChats(playerName: string, maxPages = 5): Promise<PlayerChat[]> {
+export async function getPlayerChats(playerName: string, maxPages = 10): Promise<PlayerChat[]> {
   try {
     const allChats: PlayerChat[] = [];
     
