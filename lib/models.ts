@@ -1,35 +1,28 @@
-import { anthropic } from "@ai-sdk/anthropic";
-import { fireworks } from "@ai-sdk/fireworks";
-import { groq } from "@ai-sdk/groq";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
   customProvider,
-  extractReasoningMiddleware,
-  wrapLanguageModel,
 } from "ai";
 
-// custom provider with different model settings:
+// create openrouter instance
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY!,
+});
+
+// custom providers w/ openrouter
 export const myProvider = customProvider({
   languageModels: {
-    "sonnet-3.7": anthropic("claude-3-7-sonnet-20250219"),
-    "deepseek-r1": wrapLanguageModel({
-      middleware: extractReasoningMiddleware({
-        tagName: "think",
-      }),
-      model: fireworks("accounts/fireworks/models/deepseek-r1"),
-    }),
-    "deepseek-r1-distill-llama-70b": wrapLanguageModel({
-      middleware: extractReasoningMiddleware({
-        tagName: "think",
-      }),
-      model: groq("deepseek-r1-distill-llama-70b"),
-    }),
+    "gpt-5-nano": openrouter.chat("openai/gpt-5-nano"),
+    "gpt-oss-20b": openrouter.chat("openai/gpt-oss-20b"),
+    "gemini-2.5-flash-lite": openrouter.chat("google/gemini-2.5-flash-lite"),
+    "deepseek-chat-v3.1": openrouter.chat("deepseek/deepseek-chat-v3.1"),
   },
 });
 
 export type modelID = Parameters<(typeof myProvider)["languageModel"]>["0"];
 
 export const models: Record<modelID, string> = {
-  "sonnet-3.7": "Claude Sonnet 3.7",
-  "deepseek-r1": "DeepSeek-R1",
-  "deepseek-r1-distill-llama-70b": "DeepSeek-R1 Llama 70B",
+  "gpt-5-nano": "GPT-5 Nano",
+  "gpt-oss-20b": "GPT OSS 20B",
+  "gemini-2.5-flash-lite": "Gemini 2.5 Flash Lite",
+  "deepseek-chat-v3.1": "DeepSeek Chat v3.1",
 };

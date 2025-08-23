@@ -9,17 +9,13 @@ import { modelID, models } from "@/lib/models";
 import { Footnote } from "./footnote";
 import {
   ArrowUpIcon,
-  CheckedSquare,
   ChevronDownIcon,
   StopIcon,
-  UncheckedSquare,
 } from "./icons";
-import { Input } from "./input";
 
 export function Chat() {
   const [input, setInput] = useState<string>("");
-  const [selectedModelId, setSelectedModelId] = useState<modelID>("sonnet-3.7");
-  const [isReasoningEnabled, setIsReasoningEnabled] = useState<boolean>(true);
+  const [selectedModelId, setSelectedModelId] = useState<modelID>("gpt-5-nano");
 
   const { messages, sendMessage, status, stop } = useChat({
     id: "primary",
@@ -45,56 +41,74 @@ export function Chat() {
       ) : (
         <div className="flex flex-col gap-0.5 sm:text-2xl text-xl w-full">
           <div className="flex flex-row gap-2 items-center">
-            <div>Welcome to the AI SDK Reasoning Preview.</div>
+            <div>Welcome to 2b2AI</div>
           </div>
           <div className="dark:text-zinc-500 text-zinc-400">
-            What would you like me to think about today?
+            Enter a 2b2t player username to generate an analysis report!
           </div>
         </div>
       )}
 
       <div className="flex flex-col gap-4 w-full">
         <div className="flex relative flex-col gap-1 p-3 w-full rounded-2xl dark:bg-zinc-800 bg-zinc-100">
-          <Input
-            input={input}
-            setInput={setInput}
-            selectedModelId={selectedModelId}
-            isGeneratingResponse={isGeneratingResponse}
-            isReasoningEnabled={isReasoningEnabled}
-            onSubmit={() => {
-              if (input === "") {
-                return;
-              }
-              sendMessage(
-                { text: input },
-                {
-                  body: {
-                    selectedModelId,
-                    isReasoningEnabled,
-                  },
+          <textarea
+            className="mb-12 w-full bg-transparent outline-none resize-none min-h-12 placeholder:text-zinc-400"
+            placeholder={messages.length === 0 ? "Enter a 2b2t player username to analyze" : "Continue the conversation..."}
+            value={input}
+            autoFocus
+            onChange={(event) => {
+              setInput(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+
+                if (input === "") {
+                  return;
                 }
-              );
-              setInput("");
+
+                if (isGeneratingResponse) {
+                  toast.error("Please wait for the model to finish its response!");
+                  return;
+                }
+
+                if (messages.length === 0) {
+                  // first msg - player analysis
+                  try {
+                    const userMessage = `Please anaylyze: ${input}`;
+                    
+                    sendMessage(
+                      { text: userMessage },
+                      {
+                        body: {
+                          selectedModelId,
+                          isAnalysis: true,
+                          playerName: input,
+                        },
+                      }
+                    );
+                  } catch (error) {
+                    console.error('Error starting analysis:', error);
+                    toast.error('Failed to start analysis. Please try again.');
+                  }
+                } else {
+                  // regular msg
+                  sendMessage(
+                    { text: input },
+                    {
+                      body: {
+                        selectedModelId,
+                      },
+                    }
+                  );
+                }
+                
+                setInput("");
+              }
             }}
           />
 
-          <div className="absolute bottom-2.5 left-2.5">
-            <button
-              disabled={selectedModelId !== "sonnet-3.7"}
-              className={cn(
-                "relative w-fit text-sm p-1.5 rounded-lg flex flex-row items-center gap-2 dark:hover:bg-zinc-600 hover:bg-zinc-200 cursor-pointer disabled:opacity-50",
-                {
-                  "dark:bg-zinc-600 bg-zinc-200": isReasoningEnabled,
-                },
-              )}
-              onClick={() => {
-                setIsReasoningEnabled(!isReasoningEnabled);
-              }}
-            >
-              {isReasoningEnabled ? <CheckedSquare /> : <UncheckedSquare />}
-              <div>Reasoning</div>
-            </button>
-          </div>
+
 
           <div className="absolute bottom-2.5 right-2.5 flex flex-row gap-2">
             <div className="relative w-fit text-sm p-1.5 rounded-lg flex flex-row items-center gap-0.5 dark:hover:bg-zinc-700 hover:bg-zinc-200 cursor-pointer">
@@ -110,9 +124,6 @@ export function Chat() {
                 className="absolute left-0 p-1 w-full opacity-0 cursor-pointer"
                 value={selectedModelId}
                 onChange={(event) => {
-                  if (event.target.value !== "sonnet-3.7") {
-                    setIsReasoningEnabled(true);
-                  }
                   setSelectedModelId(event.target.value as modelID);
                 }}
               >
@@ -132,7 +143,7 @@ export function Chat() {
                     isGeneratingResponse || input === "",
                 },
               )}
-              onClick={() => {
+              onClick={async () => {
                 if (input === "") {
                   return;
                 }
@@ -140,15 +151,34 @@ export function Chat() {
                 if (isGeneratingResponse) {
                   stop();
                 } else {
-                  sendMessage(
-                    { text: input },
-                    {
-                      body: {
-                        selectedModelId,
-                        isReasoningEnabled,
-                      },
+                  try {
+                    if (messages.length === 0) {
+                      const userMessage = `Analyze player: ${input}`;
+                      
+                      sendMessage(
+                        { text: userMessage },
+                        {
+                          body: {
+                            selectedModelId,
+                            isAnalysis: true,
+                            playerName: input,
+                          },
+                        }
+                      );
+                    } else {
+                      sendMessage(
+                        { text: input },
+                        {
+                          body: {
+                            selectedModelId,
+                          },
+                        }
+                      );
                     }
-                  );
+                  } catch (error) {
+                    console.error('Error sending message:', error);
+                    toast.error('Failed to send message. Please try again.');
+                  }
                 }
 
                 setInput("");
